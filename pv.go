@@ -8,7 +8,7 @@ import (
 //Config Configs to PeeVee
 type Config struct {
 	Name         string
-	StatsHandler func(c <-chan PVStats)
+	StatsHandler StatsHandler
 }
 
 //PeeVee Representation of the PV
@@ -64,12 +64,6 @@ func (pv *PeeVee) channelPiper() {
 	}
 }
 
-//PVStats Per second stats for the Pipe
-type PVStats struct {
-	Name      string
-	PerSecond uint64
-}
-
 //NewPeeVee Configures and returns a new PeeVee
 func NewPeeVee(config Config) PeeVee {
 	pv := PeeVee{
@@ -84,12 +78,15 @@ func NewPeeVee(config Config) PeeVee {
 		pv.Name = config.Name
 	}
 
+	var statsHandler StatsHandler
+
 	if config.StatsHandler == nil {
-		// go DefaultStatsHandler(pv.statsChan)
+		statsHandler = NewStdoutStatsHandler()
 	} else {
-		go config.StatsHandler(pv.GetStatsChannel())
+		statsHandler = config.StatsHandler
 	}
 
+	go statsHandler.Handle(pv.GetStatsChannel())
 	go pv.channelPiper()
 
 	return pv

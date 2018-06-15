@@ -33,7 +33,7 @@ func TestProcessStatsSendToChannel(t *testing.T) {
 		Name: "pv1",
 
 		//just to make sure we are bypassing the default handler
-		StatsHandler: func(stats <-chan PVStats) {},
+		StatsHandler: &dummyStatsHandler{},
 	})
 
 	pv.counterTime = time.Now().Add(time.Minute * -2)
@@ -52,18 +52,12 @@ func TestProcessStatsSendToChannel(t *testing.T) {
 }
 
 func TestProcessStatsReceivesFromChannel(t *testing.T) {
-	okChan := make(chan bool, 1)
+	config := Config{
+		Name:         "pv1",
+		StatsHandler: &fakeStatsHandlerOkChan{},
+	}
 
-	pv := NewPeeVee(Config{
-		Name: "pv1",
-
-		//just to make sure we are bypassing the default handler
-		StatsHandler: func(statsChan <-chan PVStats) {
-			//blocks until received msg
-			<-statsChan
-			okChan <- true
-		},
-	})
+	pv := NewPeeVee(config)
 
 	pv.counterTime = time.Now().Add(time.Minute * -2)
 	pv.procesStats()
@@ -71,7 +65,7 @@ func TestProcessStatsReceivesFromChannel(t *testing.T) {
 	timeoutChan := time.After(time.Second)
 
 	select {
-	case <-okChan:
+	case <-config.StatsHandler.(*fakeStatsHandlerOkChan).okChan:
 		return
 	case <-timeoutChan:
 		t.Error("Waited too long for the channel to return")
