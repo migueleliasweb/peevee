@@ -77,18 +77,7 @@ func TestChannelPiper(t *testing.T) {
 		Name: "pv1",
 
 		//just to make sure we are bypassing the default handler
-		StatsHandler: func(statsChan <-chan PVStats) {
-
-			counter := 0
-
-			// just drain all stats asap to unblock procesStats
-			for {
-				select {
-				case <-statsChan:
-					counter++
-				}
-			}
-		},
+		StatsHandler: &dummyStatsHandler{},
 	})
 
 	//hack into time
