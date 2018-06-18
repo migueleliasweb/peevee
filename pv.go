@@ -14,12 +14,13 @@ type Config struct {
 
 //PeeVee Representation of the PV
 type PeeVee struct {
-	Name        string
-	readChan    chan interface{}
-	writeChan   chan interface{}
-	statsChan   chan PVStats
-	counter     uint64
-	counterTime time.Time
+	Name         string
+	readChan     chan interface{}
+	writeChan    chan interface{}
+	statsChan    chan PVStats
+	counter      uint64
+	counterTime  time.Time
+	statsHandler StatsHandler
 }
 
 //GetWriteChannel Returns the write channel
@@ -32,11 +33,6 @@ func (pv *PeeVee) GetReadChannel() <-chan interface{} {
 	return pv.readChan
 }
 
-//GetStatsChannel Returns the stats channel
-func (pv *PeeVee) GetStatsChannel() chan PVStats {
-	return pv.statsChan
-}
-
 //procesStats Processes stats and sends them to `pv.statsChan`
 func (pv *PeeVee) procesStats() {
 	atomic.AddUint64(&pv.counter, 1)
@@ -47,14 +43,14 @@ func (pv *PeeVee) procesStats() {
 		var zeroCounter uint64
 		atomic.SwapUint64(&pv.counter, zeroCounter)
 
-		fmt.Println("wooo")
+		fmt.Println("Writing to statsChan")
 
 		pv.statsChan <- PVStats{
 			Name:      pv.Name,
 			PerSecond: uint64(counter / 60),
 		}
 
-		fmt.Println("wooo")
+		fmt.Println("Done writing to statsChan")
 	}
 }
 
@@ -83,15 +79,13 @@ func NewPeeVee(config Config) PeeVee {
 		pv.Name = config.Name
 	}
 
-	var statsHandler StatsHandler
-
 	if config.StatsHandler == nil {
-		statsHandler = NewStdoutStatsHandler()
+		pv.statsHandler = NewStdoutStatsHandler()
 	} else {
-		statsHandler = config.StatsHandler
+		pv.statsHandler = config.StatsHandler
 	}
 
-	go statsHandler.Handle(pv.GetStatsChannel())
+	go pv.statsHandler.Handle(pv.statsChan)
 	go pv.channelPiper()
 
 	return pv

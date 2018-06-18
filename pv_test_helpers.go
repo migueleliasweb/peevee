@@ -1,33 +1,28 @@
 package peevee
 
-import (
-	"fmt"
-	"sync/atomic"
-)
+import "fmt"
 
 type dummyStatsHandler struct{}
 
 func (stats *dummyStatsHandler) Handle(statsChan <-chan PVStats) {
 	for {
-		fmt.Println("aaa")
 		<-statsChan
-		fmt.Println("bbb")
 	}
 }
 
-type fakeStatsHandlerOkChan struct {
+type okChanStatsHandler struct {
 	okChan chan bool
 }
 
-func (stats *fakeStatsHandlerOkChan) Handle(statsChan <-chan PVStats) {
-	stats.okChan = make(chan bool, 1)
-	c := uint64(0)
+func (stats *okChanStatsHandler) Handle(statsChan <-chan PVStats) {
+	fmt.Println("Started handle")
 
 	for {
 		select {
 		case <-statsChan:
-			atomic.AddUint64(&c, 1)
+			fmt.Println("okChan")
 			stats.okChan <- true
+			return
 		}
 	}
 }
