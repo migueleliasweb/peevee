@@ -1,7 +1,6 @@
 package peevee
 
 import (
-	"fmt"
 	"sync/atomic"
 	"time"
 )
@@ -43,14 +42,10 @@ func (pv *PeeVee) procesStats() {
 		var zeroCounter uint64
 		atomic.SwapUint64(&pv.counter, zeroCounter)
 
-		fmt.Println("Writing to statsChan")
-
 		pv.statsChan <- PVStats{
 			Name:      pv.Name,
 			PerSecond: uint64(counter / 60),
 		}
-
-		fmt.Println("Done writing to statsChan")
 	}
 }
 

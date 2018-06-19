@@ -32,7 +32,6 @@ func (stats *DefaultStatsHandler) Handle(statsChan <-chan PVStats) {
 			jsonBytes, err := json.Marshal(pvStats)
 
 			if err == nil {
-				fmt.Println("WHAT")
 				fmt.Fprintln(stats.writer, string(jsonBytes))
 			} else {
 				log.Panicln(err)
