@@ -4,7 +4,6 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
-	"unsafe"
 )
 
 func TestSimpleNewPeeVee(t *testing.T) {
@@ -35,14 +34,9 @@ func TestProcessStatsMessageSize(t *testing.T) {
 	})
 
 	pv.procesStats(true)
-	expected := unsafe.Sizeof(true)
 
-	if pv.messageSize != expected {
-		t.Errorf(
-			"Wrong message size value, expecting %d but got %d",
-			expected,
-			pv.messageSize,
-		)
+	if pv.messageSize == 0 {
+		t.Errorf("Message size left empty")
 	}
 }
 

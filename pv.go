@@ -1,7 +1,6 @@
 package peevee
 
 import (
-	"fmt"
 	"sync/atomic"
 	"time"
 	"unsafe"
@@ -39,7 +38,6 @@ func (pv *PeeVee) GetReadChannel() <-chan interface{} {
 //procesStats Processes stats and sends them to `pv.statsChan`
 func (pv *PeeVee) procesStats(msg interface{}) {
 	if pv.messageSize == 0 {
-		fmt.Println(unsafe.Sizeof(msg), msg)
 		atomic.StoreUintptr(&pv.messageSize, unsafe.Sizeof(msg))
 	}
 
