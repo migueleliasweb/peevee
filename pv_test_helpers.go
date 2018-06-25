@@ -1,5 +1,7 @@
 package peevee
 
+import "fmt"
+
 type dummyStatsHandler struct{}
 
 func (stats *dummyStatsHandler) Handle(statsChan <-chan PVStats) {
@@ -8,13 +10,19 @@ func (stats *dummyStatsHandler) Handle(statsChan <-chan PVStats) {
 	}
 }
 
-type fakeStatsHandlerOkChan struct {
+type okChanStatsHandler struct {
 	okChan chan bool
 }
 
-func (stats *fakeStatsHandlerOkChan) Handle(statsChan <-chan PVStats) {
+func (stats *okChanStatsHandler) Handle(statsChan <-chan PVStats) {
+	fmt.Println("Started handle")
+
 	for {
-		<-statsChan
-		stats.okChan <- true
+		select {
+		case <-statsChan:
+			fmt.Println("okChan")
+			stats.okChan <- true
+			return
+		}
 	}
 }

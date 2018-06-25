@@ -13,7 +13,7 @@ func (fw *fakeWriter) Write(p []byte) (n int, err error) {
 	return 0, nil
 }
 
-func TestDefaultStatshandler(t *testing.T) {
+func TestDefaultStatsHandler(t *testing.T) {
 	sh := DefaultStatsHandler{
 		writer: &fakeWriter{okChan: make(chan bool, 1)},
 	}

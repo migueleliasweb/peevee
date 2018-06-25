@@ -4,6 +4,7 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"unsafe"
 )
 
 func TestSimpleNewPeeVee(t *testing.T) {
@@ -21,54 +22,54 @@ func TestProcessStatsCounter(t *testing.T) {
 		Name: "pv1",
 	})
 
-	pv.procesStats()
+	pv.procesStats(true)
 
 	if pv.counter != uint64(1) {
 		t.Errorf("Wrong counter value, expecting 1 but got %d", pv.counter)
 	}
 }
 
-func TestProcessStatsSendToChannel(t *testing.T) {
+func TestProcessStatsMessageSize(t *testing.T) {
+	pv := NewPeeVee(Config{
+		Name: "pv1",
+	})
+
+	pv.procesStats(true)
+	expected := unsafe.Sizeof(true)
+
+	if pv.messageSize != expected {
+		t.Errorf(
+			"Wrong message size value, expecting %d but got %d",
+			expected,
+			pv.messageSize,
+		)
+	}
+}
+
+func TestProcessStatChannel(t *testing.T) {
+	handler := okChanStatsHandler{
+		okChan: make(chan bool),
+	}
+
 	pv := NewPeeVee(Config{
 		Name: "pv1",
 
 		//just to make sure we are bypassing the default handler
-		StatsHandler: &dummyStatsHandler{},
+		StatsHandler: &handler,
 	})
 
+	//we need to internally change the time as the method checks if
+	//it needs to send a msg to the channel
 	pv.counterTime = time.Now().Add(time.Minute * -2)
+	pv.procesStats(true)
 
-	pv.procesStats()
-
-	stats := <-pv.GetStatsChannel()
-
-	if stats.Name != "pv1" {
-		t.Errorf("Wrong stats.Name value, expecting 'pv1' but got %s", stats.Name)
-	}
-
-	if stats.PerSecond != uint64(0) {
-		t.Errorf("Wrong stats.PerSecond value, expecting 0 but got %d", stats.PerSecond)
-	}
-}
-
-func TestProcessStatsReceivesFromChannel(t *testing.T) {
-	config := Config{
-		Name:         "pv1",
-		StatsHandler: &fakeStatsHandlerOkChan{},
-	}
-
-	pv := NewPeeVee(config)
-
-	pv.counterTime = time.Now().Add(time.Minute * -2)
-	pv.procesStats()
-
-	timeoutChan := time.After(time.Second)
-
-	select {
-	case <-config.StatsHandler.(*fakeStatsHandlerOkChan).okChan:
-		return
-	case <-timeoutChan:
-		t.Error("Waited too long for the channel to return")
+	for {
+		select {
+		case <-pv.statsHandler.(*okChanStatsHandler).okChan:
+			return
+		case <-time.After(time.Second * 5):
+			t.Error("Stats handler took too long to process")
+		}
 	}
 }
 
@@ -77,18 +78,7 @@ func TestChannelPiper(t *testing.T) {
 		Name: "pv1",
 
 		//just to make sure we are bypassing the default handler
-		StatsHandler: func(statsChan <-chan PVStats) {
-
-			counter := 0
-
-			// just drain all stats asap to unblock procesStats
-			for {
-				select {
-				case <-statsChan:
-					counter++
-				}
-			}
-		},
+		StatsHandler: &dummyStatsHandler{},
 	})
 
 	//hack into time
@@ -122,5 +112,4 @@ func TestChannelPiper(t *testing.T) {
 	if readCounter != total {
 		t.Errorf("Wrong total number of reads expected %d got %d", total, readCounter)
 	}
-
 }
