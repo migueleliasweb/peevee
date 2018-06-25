@@ -1,6 +1,9 @@
 os: linux
 language: go
 go:
-  - "1.10"
+  - tip
+before_install:
+  - go get github.com/mattn/goveralls
 script:
+  - goveralls -service=travis-ci
   - go test -v -race ./...
