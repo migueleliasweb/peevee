@@ -4,6 +4,7 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"unsafe"
 )
 
 func TestSimpleNewPeeVee(t *testing.T) {
@@ -21,10 +22,27 @@ func TestProcessStatsCounter(t *testing.T) {
 		Name: "pv1",
 	})
 
-	pv.procesStats()
+	pv.procesStats(true)
 
 	if pv.counter != uint64(1) {
 		t.Errorf("Wrong counter value, expecting 1 but got %d", pv.counter)
+	}
+}
+
+func TestProcessStatsMessageSize(t *testing.T) {
+	pv := NewPeeVee(Config{
+		Name: "pv1",
+	})
+
+	pv.procesStats(true)
+	expected := unsafe.Sizeof(true)
+
+	if pv.messageSize != expected {
+		t.Errorf(
+			"Wrong message size value, expecting %d but got %d",
+			expected,
+			pv.messageSize,
+		)
 	}
 }
 
@@ -43,7 +61,7 @@ func TestProcessStatChannel(t *testing.T) {
 	//we need to internally change the time as the method checks if
 	//it needs to send a msg to the channel
 	pv.counterTime = time.Now().Add(time.Minute * -2)
-	pv.procesStats()
+	pv.procesStats(true)
 
 	for {
 		select {

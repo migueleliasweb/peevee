@@ -10,8 +10,11 @@ import (
 
 //PVStats Per second stats for the Pipe
 type PVStats struct {
-	Name      string
-	PerSecond uint64
+	Name          string
+	PerSecond     uint64
+	BitPerSecond  uint64
+	KbitPerSecond uint64
+	MbitPerSecond uint64
 }
 
 //StatsHandler Interface for stats handlers
