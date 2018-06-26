@@ -19,7 +19,7 @@ type PeeVee struct {
 	writeChan    chan interface{}
 	statsChan    chan PVStats
 	counter      uint64
-	counterTime  time.Time
+	counterTime  atomic.Value
 	statsHandler StatsHandler
 	messageSize  uintptr
 	bitsCounter  uintptr
@@ -44,15 +44,19 @@ func (pv *PeeVee) procesStats(msg interface{}) {
 	atomic.AddUint64(&pv.counter, 1)
 	atomic.AddUintptr(&pv.bitsCounter, pv.messageSize)
 
-	if time.Now().After(pv.counterTime.Add(time.Minute)) {
+	if time.Now().After(pv.counterTime.Load().(time.Time).Add(time.Second * 30)) {
 		counter := atomic.LoadUint64(&pv.counter)
 
 		var zeroCounter uint64
 		atomic.SwapUint64(&pv.counter, zeroCounter)
 
-		bitsPerSecond := uint64(pv.bitsCounter / 60)
+		bitsPerSecond := uint64(pv.bitsCounter / 30)
 		KbitPerSecond := uint64(bitsPerSecond / 1000)
 		MbitPerSecond := uint64(KbitPerSecond / 1000)
+
+		//reseting internal state
+		atomic.StoreUintptr(&pv.bitsCounter, 0)
+		pv.counterTime.Store(time.Time{})
 
 		pv.statsChan <- PVStats{
 			Name:          pv.Name,
@@ -78,12 +82,13 @@ func (pv *PeeVee) channelPiper() {
 //NewPeeVee Configures and returns a new PeeVee
 func NewPeeVee(config Config) PeeVee {
 	pv := PeeVee{
-		readChan:    make(chan interface{}),
-		writeChan:   make(chan interface{}),
-		statsChan:   make(chan PVStats, 1),
-		counterTime: time.Now(),
-		counter:     uint64(0),
+		readChan:  make(chan interface{}),
+		writeChan: make(chan interface{}),
+		statsChan: make(chan PVStats, 1),
+		counter:   uint64(0),
 	}
+
+	pv.counterTime.Store(time.Now())
 
 	if config.Name != "" {
 		pv.Name = config.Name

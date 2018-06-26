@@ -54,7 +54,9 @@ func TestProcessStatChannel(t *testing.T) {
 
 	//we need to internally change the time as the method checks if
 	//it needs to send a msg to the channel
-	pv.counterTime = time.Now().Add(time.Minute * -2)
+	v := atomic.Value{}
+	v.Store(time.Now().Add(time.Minute * -2))
+	pv.counterTime = v
 	pv.procesStats(true)
 
 	for {
@@ -76,7 +78,9 @@ func TestChannelPiper(t *testing.T) {
 	})
 
 	//hack into time
-	pv.counterTime = time.Now().Add(time.Minute * -2)
+	v := atomic.Value{}
+	v.Store(time.Now().Add(time.Minute * -2))
+	pv.counterTime = v
 
 	readCounter := uint64(0)
 	total := uint64(1234)
