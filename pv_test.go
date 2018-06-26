@@ -23,8 +23,8 @@ func TestProcessStatsCounter(t *testing.T) {
 
 	pv.procesStats(true)
 
-	if pv.counter != uint64(1) {
-		t.Errorf("Wrong counter value, expecting 1 but got %d", pv.counter)
+	if pv.counterMsg != uint64(1) {
+		t.Errorf("Wrong counter value, expecting 1 but got %d", pv.counterMsg)
 	}
 }
 
@@ -54,7 +54,9 @@ func TestProcessStatChannel(t *testing.T) {
 
 	//we need to internally change the time as the method checks if
 	//it needs to send a msg to the channel
-	pv.counterTime = time.Now().Add(time.Minute * -2)
+	v := atomic.Value{}
+	v.Store(time.Now().Add(time.Minute * -2))
+	pv.counterTime = v
 	pv.procesStats(true)
 
 	for {
@@ -76,7 +78,9 @@ func TestChannelPiper(t *testing.T) {
 	})
 
 	//hack into time
-	pv.counterTime = time.Now().Add(time.Minute * -2)
+	v := atomic.Value{}
+	v.Store(time.Now().Add(time.Minute * -2))
+	pv.counterTime = v
 
 	readCounter := uint64(0)
 	total := uint64(1234)

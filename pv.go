@@ -18,11 +18,11 @@ type PeeVee struct {
 	readChan     chan interface{}
 	writeChan    chan interface{}
 	statsChan    chan PVStats
-	counter      uint64
-	counterTime  time.Time
+	counterMsg   uint64
+	counterTime  atomic.Value
 	statsHandler StatsHandler
 	messageSize  uintptr
-	bitsCounter  uintptr
+	counterBits  uintptr
 }
 
 //GetWriteChannel Returns the write channel
@@ -41,22 +41,25 @@ func (pv *PeeVee) procesStats(msg interface{}) {
 		atomic.StoreUintptr(&pv.messageSize, unsafe.Sizeof(msg))
 	}
 
-	atomic.AddUint64(&pv.counter, 1)
-	atomic.AddUintptr(&pv.bitsCounter, pv.messageSize)
+	atomic.AddUint64(&pv.counterMsg, 1)
+	atomic.AddUintptr(&pv.counterBits, pv.messageSize)
 
-	if time.Now().After(pv.counterTime.Add(time.Minute)) {
-		counter := atomic.LoadUint64(&pv.counter)
+	//if now is in the future compared to the start time + 30s
+	if time.Now().After(pv.counterTime.Load().(time.Time).Add(time.Second * 10)) {
+		counterMsg := atomic.LoadUint64(&pv.counterMsg)
 
-		var zeroCounter uint64
-		atomic.SwapUint64(&pv.counter, zeroCounter)
-
-		bitsPerSecond := uint64(pv.bitsCounter / 60)
+		bitsPerSecond := uint64(pv.counterBits / 10)
 		KbitPerSecond := uint64(bitsPerSecond / 1000)
 		MbitPerSecond := uint64(KbitPerSecond / 1000)
 
+		//reseting internal state
+		atomic.StoreUintptr(&pv.counterBits, 0)
+		pv.counterTime.Store(time.Now())
+		atomic.StoreUint64(&pv.counterMsg, 0)
+
 		pv.statsChan <- PVStats{
 			Name:          pv.Name,
-			PerSecond:     uint64(counter / 60),
+			MsgPerSecond:  uint64(counterMsg / 10),
 			BitPerSecond:  bitsPerSecond,
 			KbitPerSecond: KbitPerSecond,
 			MbitPerSecond: MbitPerSecond,
@@ -78,12 +81,13 @@ func (pv *PeeVee) channelPiper() {
 //NewPeeVee Configures and returns a new PeeVee
 func NewPeeVee(config Config) PeeVee {
 	pv := PeeVee{
-		readChan:    make(chan interface{}),
-		writeChan:   make(chan interface{}),
-		statsChan:   make(chan PVStats, 1),
-		counterTime: time.Now(),
-		counter:     uint64(0),
+		readChan:   make(chan interface{}),
+		writeChan:  make(chan interface{}),
+		statsChan:  make(chan PVStats, 1),
+		counterMsg: uint64(0),
 	}
+
+	pv.counterTime.Store(time.Now())
 
 	if config.Name != "" {
 		pv.Name = config.Name
