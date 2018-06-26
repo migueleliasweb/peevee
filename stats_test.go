@@ -21,8 +21,8 @@ func TestDefaultStatsHandler(t *testing.T) {
 	statsChan := make(chan PVStats, 1)
 
 	stats := PVStats{
-		Name:      "foo",
-		PerSecond: uint64(123),
+		Name:         "foo",
+		MsgPerSecond: uint64(123),
 	}
 
 	go sh.Handle(statsChan)

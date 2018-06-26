@@ -56,11 +56,11 @@ func (pv *PeeVee) procesStats(msg interface{}) {
 
 		//reseting internal state
 		atomic.StoreUintptr(&pv.bitsCounter, 0)
-		pv.counterTime.Store(time.Time{})
+		pv.counterTime.Store(time.Now())
 
 		pv.statsChan <- PVStats{
 			Name:          pv.Name,
-			PerSecond:     uint64(counter / 60),
+			MsgPerSecond:  uint64(counter / 60),
 			BitPerSecond:  bitsPerSecond,
 			KbitPerSecond: KbitPerSecond,
 			MbitPerSecond: MbitPerSecond,
