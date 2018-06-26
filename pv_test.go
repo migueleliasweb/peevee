@@ -23,8 +23,8 @@ func TestProcessStatsCounter(t *testing.T) {
 
 	pv.procesStats(true)
 
-	if pv.counter != uint64(1) {
-		t.Errorf("Wrong counter value, expecting 1 but got %d", pv.counter)
+	if pv.counterMsg != uint64(1) {
+		t.Errorf("Wrong counter value, expecting 1 but got %d", pv.counterMsg)
 	}
 }
 
