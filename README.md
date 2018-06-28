@@ -7,54 +7,6 @@ PEEVEE allows you to peek into what is happening in real time throught the Chann
 ### Basic example: What if we would like to know how many messages are passing throught the 'queue' channel?
 
 ```go
-package main
 
-import (
-	"fmt"
-	"time"
-
-	"github.com/migueleliasweb/peevee"
-)
-
-func withoutPeevee() {
-	queue := make(chan string)
-
-	go func() {
-		for {
-			select {
-			case msg := <-queue:
-				fmt.Println(msg)
-			}
-		}
-	}()
-
-	for {
-		queue <- "PEEVEE is AWESOME"
-		time.Sleep(time.Millisecond * 200)
-	}
-}
-
-func withPeevee() {
-	pv := peevee.NewPeeVee(peevee.Config{Name: "my-string-channel"})
-
-	go func() {
-		for {
-			select {
-			case msg := <-pv.GetReadChannel():
-				fmt.Println(msg)
-			}
-		}
-	}()
-
-	for {
-		pv.GetWriteChannel() <- "PEEVEE is AWESOME"
-		time.Sleep(time.Millisecond * 200)
-	}
-}
-
-func main() {
-	withoutPeevee()
-	//withPeevee()
-}
 
 ```
