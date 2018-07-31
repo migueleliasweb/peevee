@@ -6,23 +6,31 @@ import (
 	"unsafe"
 )
 
+var defaultStatsFrequency uint64
+
+func init() {
+	defaultStatsFrequency = uint64(10)
+}
+
 //Config Configs to PeeVee
 type Config struct {
-	Name         string
-	StatsHandler StatsHandler
+	Name           string
+	StatsHandler   StatsHandler
+	StatsFrequency uint64
 }
 
 //PeeVee Representation of the PV
 type PeeVee struct {
-	Name         string
-	readChan     chan interface{}
-	writeChan    chan interface{}
-	statsChan    chan PVStats
-	counterMsg   uint64
-	counterTime  atomic.Value
-	statsHandler StatsHandler
-	messageSize  uintptr
-	counterBits  uintptr
+	Name           string
+	readChan       chan interface{}
+	writeChan      chan interface{}
+	statsChan      chan PVStats
+	counterMsg     uint64
+	counterTime    atomic.Value
+	statsHandler   StatsHandler
+	messageSize    uintptr
+	counterBits    uintptr
+	statsFrequency uint64
 }
 
 //GetWriteChannel Returns the write channel
@@ -45,9 +53,10 @@ func (pv *PeeVee) procesStats(msg interface{}) {
 	atomic.AddUintptr(&pv.counterBits, pv.messageSize)
 
 	//if now is in the future compared to the start time + 30s
-	if time.Now().After(pv.counterTime.Load().(time.Time).Add(time.Second * 10)) {
+	if time.Now().After(pv.counterTime.Load().(time.Time).Add(time.Second * time.Duration(pv.statsFrequency))) {
 		counterMsg := atomic.LoadUint64(&pv.counterMsg)
 
+		msgsPerSecond := uint64(counterMsg / pv.statsFrequency)
 		bitsPerSecond := uint64(pv.counterBits / 10)
 		KbitPerSecond := uint64(bitsPerSecond / 1000)
 		MbitPerSecond := uint64(KbitPerSecond / 1000)
@@ -59,7 +68,7 @@ func (pv *PeeVee) procesStats(msg interface{}) {
 
 		pv.statsChan <- PVStats{
 			Name:          pv.Name,
-			MsgPerSecond:  uint64(counterMsg / 10),
+			MsgPerSecond:  msgsPerSecond,
 			BitPerSecond:  bitsPerSecond,
 			KbitPerSecond: KbitPerSecond,
 			MbitPerSecond: MbitPerSecond,
@@ -88,6 +97,12 @@ func NewPeeVee(config Config) PeeVee {
 	}
 
 	pv.counterTime.Store(time.Now())
+
+	if config.StatsFrequency != 0 {
+		pv.statsFrequency = config.StatsFrequency
+	} else {
+		pv.statsFrequency = defaultStatsFrequency
+	}
 
 	if config.Name != "" {
 		pv.Name = config.Name
