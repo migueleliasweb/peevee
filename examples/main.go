@@ -1,28 +1,97 @@
 package main
 
 import (
+	"encoding/csv"
+	"io"
 	"log"
-	"time"
-
-	"github.com/migueleliasweb/peevee"
+	"os"
 )
 
-func main() {
-	pv := peevee.NewPeeVee(peevee.Config{Name: "my-string-channel"})
+func csvreader() (chan []string, <-chan bool) {
+	queue := make(chan []string)
+	done := make(chan bool)
+
+	f, _ := os.Open("data.csv")
+	reader := csv.NewReader(f)
 
 	go func() {
+		// defer close(queue)
+		for {
+			record, err := reader.Read()
+			if err == io.EOF {
+				log.Println("Reached EOF")
+				done <- true
+				return
+			}
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			queue <- record
+		}
+	}()
+
+	return queue, done
+}
+
+func filterQueue(inQueue chan []string, offset int, searchString string) <-chan []string {
+	outQueue := make(chan []string)
+
+	go func() {
+		// defer close(outQueue)
+
 		for {
 			select {
-			case msg := <-pv.GetReadChannel():
-				log.Println(msg)
+			case row := <-inQueue:
+				if row[offset] == searchString {
+					//send it to the filtered queue
+					outQueue <- row
+				} else {
+					//just publish back onto the main queue
+					inQueue <- row
+				}
 			}
 		}
 	}()
 
-	log.Println("Printing channel stats every 10 seconds...")
+	return outQueue
+}
+
+func fanout(inQueue <-chan []string, outQueues ...chan<- []string) {
+	go func() {
+		for {
+			select {
+			case row := <-inQueue:
+				for _, outQueue := range outQueues {
+					outQueue <- row
+				}
+			}
+
+		}
+	}()
+}
+
+func notbasic() {
+	mainQueue, doneQueue := csvreader()
 
 	for {
-		pv.GetWriteChannel() <- "PeeVee is AWESOME"
-		time.Sleep(time.Millisecond * 200)
+		select {
+		case row := <-mainQueue:
+			log.Println(row)
+		}
 	}
+
+	// LGfilteredQueue := filterQueue(mainQueue, 6, "LG")
+
+	// for {
+	// 	select {
+	// 	case row := <-LGfilteredQueue:
+	// 		log.Println(row)
+	// 	}
+	// }
+
+}
+
+func main() {
+	notbasic()
 }
