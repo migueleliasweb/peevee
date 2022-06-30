@@ -8,7 +8,9 @@
 
 PEEVEE lets you peek into what is happening in real time throught the Channels in Golang. It can expose [Prometheus](https://prometheus.io/) metrics about the throughput of channels it created. Think of it like Unix's *"pv"* (https://linux.die.net/man/1/pv) in a way.
 
-## Example
+## Examples
+
+### Using PeeVee to create both reader and writer channels
 
 ```go
 package main
@@ -32,7 +34,7 @@ func runMetricsEndpoint() {
 }
 
 func main() {
-	pv := NewPeeVee("myWorkChannel", WithPromMetrics[int]())
+	pv := peevee.NewPeeVee("myWorkChannel", WithPromMetrics[int]())
 
 	// mimic an asynchronous channel writer
 	go func() {
@@ -46,6 +48,62 @@ func main() {
 	go func() {
 		for {
 			fmt.Printnl("int:", <-pv.GetReadableChan())
+		}
+	}()
+
+	runMetricsEndpoint()
+	
+	// Leave the example running and open "localhost:8080/metrics" on your browser.
+	// You will see a metric called "peevee" that is generated in real time
+	// when the channel is being read/written.
+}
+```
+
+### Using PeeVee to wrap an existing channel for reading
+
+```go
+package main
+
+import (
+	"fmt"
+	"time"
+	"log"
+
+	"github.com/migueleliasweb/peevee"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+func runMetricsEndpoint() {
+	http.Handle("/metrics", promhttp.HandlerFor(
+		prometheus.DefaultGatherer,
+		promhttp.HandlerOpts{},
+	))
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}
+
+func main() {
+	// this is a channel that gets returned
+	// from an SDK or a third party lib, for example
+	channelYouDontControl := make(chan bool)
+
+	go func() {
+		for {
+			// this would be something happening inside the SDK or lib
+			channelYouDontControl <- true
+			time.Sleep(time.Millisecond * 250)
+		}
+	}()
+
+	pv := peevee.NewReaderWrap(
+		"boolwrap",
+		channelYouDontControl, // this time you can pass the existing channel
+	)
+
+	// mimic an asynchronous channel reader
+	go func() {
+		for {
+			fmt.Printnl("got:", <-pv.GetReadableChan())
 		}
 	}()
 
