@@ -1,12 +1,12 @@
 
 
-# PEEVEE Go 1.18+ only (requires Go generics)
+# PeeVee - Go 1.18+ only (requires Go generics)
 
 [Goreportcard](https://goreportcard.com/badge/github.com/migueleliasweb/peevee) 
 [![Build Status](https://travis-ci.org/migueleliasweb/peevee.svg?branch=master)](https://travis-ci.org/migueleliasweb/peevee) 
 [![Coveralls](https://coveralls.io/repos/github/migueleliasweb/peevee/badge.svg?branch=master)](https://coveralls.io/github/migueleliasweb/peevee?branch=master)
 
-PEEVEE lets you peek into what is happening in real time throught the Channels in Golang. It can expose [Prometheus](https://prometheus.io/) metrics about the throughput of channels it created. Think of it like Unix's *"pv"* (https://linux.die.net/man/1/pv) in a way.
+PEEVEE lets you peek into what is happening in real time through Golang channels. It can automatically generate [Prometheus](https://prometheus.io/) metrics about the throughput of channels. Think of it like Unix's *"pv"* (https://linux.die.net/man/1/pv) but in Golang.
 
 ## Examples
 
