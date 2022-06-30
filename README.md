@@ -2,7 +2,7 @@
 
 # PeeVee - Go 1.18+ only (requires Go generics)
 
-[Goreportcard](https://goreportcard.com/badge/github.com/migueleliasweb/peevee) 
+![Goreportcard](https://img.shields.io/badge/go%20report-A+-brightgreen.svg?style=flat) 
 [![Build Status](https://travis-ci.org/migueleliasweb/peevee.svg?branch=master)](https://travis-ci.org/migueleliasweb/peevee) 
 [![Coveralls](https://coveralls.io/repos/github/migueleliasweb/peevee/badge.svg?branch=master)](https://coveralls.io/github/migueleliasweb/peevee?branch=master)
 [![Go Reference](https://pkg.go.dev/badge/github.com/migueleliasweb/peevee.svg)](https://pkg.go.dev/github.com/migueleliasweb/peevee)
