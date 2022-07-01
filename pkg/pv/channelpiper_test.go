@@ -6,7 +6,7 @@ import (
 )
 
 func TestCallbackChannelPiper(t *testing.T) {
-	pv := NewPeeVee("myintpeevee", WithCallback(func(i int) {}))
+	pv := New("myintpeevee", WithCallback(func(i int) {}))
 
 	go func() {
 		pv.GetWritableChan() <- 1234
@@ -28,7 +28,7 @@ func TestCallbackChannelPiper(t *testing.T) {
 }
 
 func TestDefaultChannelPiper(t *testing.T) {
-	pv := NewPeeVee[int]("myintpeevee")
+	pv := New[int]("myintpeevee")
 
 	go func() {
 		pv.GetWritableChan() <- 1234

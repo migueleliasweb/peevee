@@ -25,8 +25,8 @@ func (pv *PeeVee[T]) GetWritableChan() chan<- T {
 	return pv.writeChan
 }
 
-//NewPeeVee Configures and returns a new PeeVee
-func NewPeeVee[T any](PVname string, ops ...PVOptions[T]) PeeVee[T] {
+//New Configures and returns a new PeeVee
+func New[T any](PVname string, ops ...PVOptions[T]) PeeVee[T] {
 	pv := PeeVee[T]{
 		Name:      PVname,
 		readChan:  make(chan T),

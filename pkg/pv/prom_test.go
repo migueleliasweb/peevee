@@ -8,13 +8,13 @@ import (
 )
 
 func TestWithPromMetricsSimple(t *testing.T) {
-	NewPeeVee("myintpeevee", WithPromMetrics[int]())
+	New("myintpeevee", WithPromMetrics[int]())
 }
 
 func TestWithPromMetrics(t *testing.T) {
 	r := prometheus.NewRegistry()
 
-	pv := NewPeeVee("myintpeevee", WithPromMetrics[int](WithPromMetricsConfig{
+	pv := New("myintpeevee", WithPromMetrics[int](WithPromMetricsConfig{
 		UseRegisterer: r,
 	}))
 

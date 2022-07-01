@@ -19,7 +19,7 @@ type CallbackChannelPiper[T any] struct {
 	callback func(T)
 }
 
-// Pipe pipe items between channels
+// Pipe pipes items between the read and write channels
 func (ccp *CallbackChannelPiper[T]) Pipe() {
 	for item := range ccp.WriteChan {
 		if ccp.callback != nil {
@@ -28,4 +28,6 @@ func (ccp *CallbackChannelPiper[T]) Pipe() {
 
 		ccp.ReadChan <- item
 	}
+
+	close(ccp.ReadChan)
 }

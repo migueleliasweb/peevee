@@ -35,7 +35,7 @@ func runMetricsEndpoint() {
 }
 
 func main() {
-	pv := peevee.NewPeeVee("myWorkChannel", WithPromMetrics[int]())
+	pv := peevee.New("myWorkChannel", WithPromMetrics[int]())
 
 	// mimic an asynchronous channel writer
 	go func() {
