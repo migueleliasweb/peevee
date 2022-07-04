@@ -25,6 +25,12 @@ func (pv *PeeVee[T]) GetWritableChan() chan<- T {
 	return pv.writeChan
 }
 
+// GetWritableChan Interally closes all channels
+func (pv *PeeVee[T]) Close() {
+	close(pv.readChan)
+	close(pv.writeChan)
+}
+
 //New Configures and returns a new PeeVee
 func New[T any](PVname string, ops ...PVOptions[T]) PeeVee[T] {
 	pv := PeeVee[T]{
